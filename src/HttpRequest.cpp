@@ -10,6 +10,11 @@ HttpRequest::HttpRequest(const std::string& request_string)
 	while ((pos = s.find("\r\n")) != std::string::npos) {
 		line = s.substr(0, pos);
 
+		if (line.find("GET ") != std::string::npos) {
+			m_uri = s.substr(4, line.find(" ", 5) - 4);
+			std::cout << m_uri << std::endl;
+		}
+
 		// If the line contains a colon, we assume it's a header.
 		// TODO: This may not always be the case.
 		size_t delim_pos = 0;

@@ -9,6 +9,8 @@ static std::string status_code_string(HttpStatusCode status_code)
 		return "200 OK";
 	case HttpStatusCode::Forbidden:
 		return "403 Forbidden";
+	case HttpStatusCode::NotFound:
+		return "404 Not Found";
 	}
 }
 

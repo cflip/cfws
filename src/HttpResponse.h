@@ -5,7 +5,8 @@
 
 enum class HttpStatusCode {
 	OK = 200,
-	Forbidden = 403
+	Forbidden = 403,
+	NotFound = 404
 };
 
 class HttpResponse {
