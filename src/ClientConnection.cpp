@@ -9,8 +9,10 @@ ClientConnection::ClientConnection(int socket)
 {
 }
 
-void ClientConnection::dump_request_data()
+HttpRequest ClientConnection::read_request()
 {
+	// TODO: Clean up this code to ensure it works with multiple lines
+	//       and not risk a buffer overflow.
 	constexpr int BUFFER_SIZE = 4096;
 	char buffer[BUFFER_SIZE+1];
 	int n;
@@ -24,6 +26,8 @@ void ClientConnection::dump_request_data()
 
 		memset(buffer, 0, BUFFER_SIZE);
 	}
+
+	return HttpRequest(buffer);
 }
 
 bool ClientConnection::send(const HttpResponse& response)

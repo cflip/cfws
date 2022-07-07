@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "ClientConnection.h"
+#include "HttpRequest.h"
 #include "HttpResponse.h"
 #include "ServerConnection.h"
 
@@ -13,7 +14,7 @@ int main(int argc, char** argv)
 	while (true) {
 		std::cout << "Waiting for connections on port 8080" << std::endl;
 		ClientConnection client = server.accept_client_connection();
-		client.dump_request_data();
+		HttpRequest request = client.read_request();
 
 		HttpResponse response(HttpStatusCode::OK);
 		response.add_header("Server", "cfws");

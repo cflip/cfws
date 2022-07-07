@@ -1,12 +1,13 @@
 #pragma once
 
+#include "HttpRequest.h"
 #include "HttpResponse.h"
 
 class ClientConnection {
 public:
 	ClientConnection(int socket);
 
-	void dump_request_data();
+	HttpRequest read_request();
 
 	bool send(const HttpResponse&);
 	void close_connection();
