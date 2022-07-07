@@ -15,11 +15,11 @@ int main(int argc, char** argv)
 		ClientConnection client = server.accept_client_connection();
 		client.dump_request_data();
 
-		HttpResponse http_response(ResponseCode::OK);
-		http_response.add_header("Server: cfws");
+		HttpResponse response(HttpStatusCode::OK);
+		response.add_header("Server", "cfws");
+		response.set_content("Welcome to the page.");
 
-		const char* message = "Welcome to the page.";
-		client.send(http_response, message);
-		client.close();
+		client.send(response);
+		client.close_connection();
 	}
 }

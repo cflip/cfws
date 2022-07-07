@@ -1,16 +1,32 @@
 #include "HttpResponse.h"
 
-HttpResponse::HttpResponse(ResponseCode response_code)
+#include <sstream>
+
+static std::string status_code_string(HttpStatusCode status_code)
 {
-	m_string_stream << "HTTP/1.0 200 OK";
+	switch (status_code) {
+	case HttpStatusCode::OK:
+		return "200 OK";
+	}
 }
 
-void HttpResponse::add_header(std::string header)
+HttpResponse::HttpResponse(HttpStatusCode status_code)
+	: m_status_code(status_code)
 {
-	m_string_stream << '\n' << header;
+}
+
+void HttpResponse::add_header(const std::string& header, const std::string& value)
+{
+	m_headers[header] = value;
 }
 
 std::string HttpResponse::to_string() const
 {
-	return m_string_stream.str();
+	std::stringstream string_stream;
+	string_stream << "HTTP/1.0 " << status_code_string(m_status_code) << "\r\n";
+	for (const auto& header : m_headers)
+		string_stream << header.first << ": " << header.second << "\r\n";
+	string_stream << "\r\n" << m_content;
+
+	return string_stream.str();
 }

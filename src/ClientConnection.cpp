@@ -26,24 +26,19 @@ void ClientConnection::dump_request_data()
 	}
 }
 
-bool ClientConnection::send(const HttpResponse& response, const char* message)
+bool ClientConnection::send(const HttpResponse& response)
 {
 	if (!m_is_open)
 		return false;
 
-	std::stringstream ss;
-	ss << response.to_string()
-	   << "\r\n\r\n"
-	   << message;
-
-	std::string result = ss.str();
+	std::string result = response.to_string();
 	write(m_socket_fd, result.c_str(), result.length());
 
 	return true;
 }
 
-void ClientConnection::close()
+void ClientConnection::close_connection()
 {
 	m_is_open = false;
-	::close(m_socket_fd);
+	close(m_socket_fd);
 }
