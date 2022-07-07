@@ -7,17 +7,9 @@ static std::string status_code_string(HttpStatusCode status_code)
 	switch (status_code) {
 	case HttpStatusCode::OK:
 		return "200 OK";
+	case HttpStatusCode::Forbidden:
+		return "403 Forbidden";
 	}
-}
-
-HttpResponse::HttpResponse(HttpStatusCode status_code)
-	: m_status_code(status_code)
-{
-}
-
-void HttpResponse::add_header(const std::string& header, const std::string& value)
-{
-	m_headers[header] = value;
 }
 
 std::string HttpResponse::to_string() const

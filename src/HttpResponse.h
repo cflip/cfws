@@ -4,14 +4,18 @@
 #include <string>
 
 enum class HttpStatusCode {
-	OK = 200
+	OK = 200,
+	Forbidden = 403
 };
 
 class HttpResponse {
 public:
-	HttpResponse(HttpStatusCode status_code);
+	void add_header(const std::string& header, const std::string& value)
+	{
+		m_headers[header] = value;
+	}
 
-	void add_header(const std::string& header, const std::string& value);
+	void set_status_code(HttpStatusCode status_code) { m_status_code = status_code; }
 	void set_content(const std::string& content) { m_content = content; }
 
 	std::string to_string() const;
