@@ -1,2 +1,4 @@
 # Ignore executable binary
 cfws
+
+.vscode
