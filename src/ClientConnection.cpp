@@ -19,8 +19,6 @@ HttpRequest ClientConnection::read_request()
 
 	memset(buffer, 0, BUFFER_SIZE);
 	while ((n = read(m_socket_fd, buffer, BUFFER_SIZE-1)) > 0) {
-		std::cout << buffer;
-
 		if (buffer[n-1] == '\n')
 			break;
 
