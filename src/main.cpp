@@ -1,3 +1,5 @@
+#include <getopt.h>
+
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -7,15 +9,36 @@
 #include "HttpResponse.h"
 #include "ServerConnection.h"
 
+static option long_options[] = {
+	{ "port", required_argument, NULL, 'p' },
+};
+
 int main(int argc, char** argv)
 {
+	int port = 8080;
 	namespace fs = std::filesystem;
 
-	ServerConnection server(8080);
+	int c;
+	int option_index = 0;
+	while ((c = getopt_long(argc, argv, "p:", long_options, &option_index)) != -1) {
+		switch (c) {
+		case 'p':
+			port = atoi(optarg);
+			if (port == 0) {
+				std::cerr << "cfws: Specified port is not a valid number" << std::endl;
+				exit(1);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	ServerConnection server(port);
 	std::cout << "cfws v0.1.0]\n";
 
 	while (true) {
-		std::cout << "Waiting for connections on port 8080" << std::endl;
+		std::cout << "Waiting for connections on port " << port << std::endl;
 		ClientConnection client = server.accept_client_connection();
 		HttpRequest request = client.read_request();
 
