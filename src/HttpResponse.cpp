@@ -11,6 +11,8 @@ static std::string status_code_string(HttpStatusCode status_code)
 		return "403 Forbidden";
 	case HttpStatusCode::NotFound:
 		return "404 Not Found";
+	case HttpStatusCode::InternalServerError:
+		return "500 Internal Server Error";
 	}
 }
 
