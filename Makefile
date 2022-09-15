@@ -1,4 +1,4 @@
-CFLAGS=-pedantic -Wall --std=c++11
+CFLAGS=-pedantic -Wall --std=c++17
 
 SRC=src/main.cpp \
     src/ClientConnection.cpp \
