@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <strings.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <netdb.h>

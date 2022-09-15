@@ -1,4 +1,3 @@
-CC=clang++
 CFLAGS=-pedantic -Wall --std=c++11
 
 SRC=src/main.cpp \
@@ -10,4 +9,4 @@ SRC=src/main.cpp \
 OUT=cfws
 
 $(OUT): $(SRC)
-	$(CC) $(CFLAGS) -o $(OUT) $(SRC)
+	$(CXX) $(CFLAGS) -o $(OUT) $(SRC)

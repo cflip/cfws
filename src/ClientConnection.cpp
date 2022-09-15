@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
+#include <cstring>
 
 ClientConnection::ClientConnection(int socket)
 	: m_socket_fd(socket)
