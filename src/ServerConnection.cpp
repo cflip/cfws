@@ -5,7 +5,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <strings.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <netdb.h>
@@ -21,11 +20,14 @@ static void error_and_die(const char* message)
 ServerConnection::ServerConnection(int port)
 {
 	sockaddr_in address;
+	int socket_options = 1;
 
 	if ((m_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		error_and_die("Failed to create socket");
 
-	bzero(&address, sizeof(address));
+	if (setsockopt(m_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &socket_options, sizeof(socket_options)))
+			error_and_die("setsockopt");
+
 	address.sin_family      = AF_INET;
 	address.sin_addr.s_addr = htonl(INADDR_ANY);
 	address.sin_port        = htons(port);
