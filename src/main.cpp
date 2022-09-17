@@ -54,6 +54,14 @@ static HttpResponse serve_from_cgi(const std::string& executable_path, HttpReque
 	HttpResponse response;
 	response.add_header("Server", "cfws");
 
+	setenv("CONTENT_LENGTH", "0", true);
+	setenv("REQUEST_URI", request.uri().c_str(), true);
+	setenv("SCRIPT_NAME", executable_path.c_str(), true);
+	setenv("SCRIPT_FILENAME", executable_path.c_str(), true);
+	setenv("REQUEST_METHOD", "GET", true);
+	setenv("SERVER_PROTOCOL", "HTTP/1.1", true);
+	setenv("SERVER_SOFTWARE", "cfws/1.0-dev", true);
+
 	std::stringstream sstream;
 
 	FILE* fp = popen(executable_path.c_str(), "r");
@@ -70,6 +78,14 @@ static HttpResponse serve_from_cgi(const std::string& executable_path, HttpReque
 		sstream << ch;
 
 	pclose(fp);
+
+	unsetenv("CONTENT_LENGTH");
+	unsetenv("REQUEST_URI");
+	unsetenv("SCRIPT_NAME");
+	unsetenv("SCRIPT_FILENAME");
+	unsetenv("REQUEST_METHOD");
+	unsetenv("SERVER_PROTOCOL");
+	unsetenv("SERVER_SOFTWARE");
 
 	// TODO: We should be able to construct a repsonse from an entire string
 	//       instead of always needing to individually set headers and content.
