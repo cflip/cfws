@@ -74,8 +74,7 @@ static HttpResponse serve_from_cgi(const std::string& executable_path, HttpReque
 	// TODO: We should be able to construct a repsonse from an entire string
 	//       instead of always needing to individually set headers and content.
 	response.set_status_code(HttpStatusCode::OK);
-	response.add_header("Content-Type", "text/plain");
-	response.set_content(sstream.str());
+	response.add_headers_and_content(sstream.str());
 	return response;
 }
 

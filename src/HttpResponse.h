@@ -19,6 +19,7 @@ public:
 
 	void set_status_code(HttpStatusCode status_code) { m_status_code = status_code; }
 	void set_content(const std::string& content) { m_content = content; }
+	void add_headers_and_content(const std::string&);
 
 	std::string to_string() const;
 private:
