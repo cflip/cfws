@@ -50,16 +50,16 @@ static HttpResponse serve_from_filesystem(HttpRequest request)
 	return response;
 }
 
-static HttpResponse serve_from_cgi(const std::string& executable_path, HttpRequest request)
+static HttpResponse serve_from_cgi(const std::string& script_path, HttpRequest request)
 {
 	HttpResponse response;
 	response.add_header("Server", "cfws");
 
-	CGIScript script(executable_path, request);
+	CGIScript script(script_path, request);
 	if (!script.is_open()) {
 		response.set_status_code(HttpStatusCode::InternalServerError);
 		response.add_header("Content-Type", "text/plain");
-		response.set_content("Failed to open CGI executable!");
+		response.set_content("Failed to open CGI script!");
 		return response;
 	}
 
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 	}
 
 	ServerConnection server(port);
-	std::cout << "Serving a " << (in_cgi_mode ? "CGI exectuable" : "directory") << " on port " << port << std::endl;
+	std::cout << "Serving a " << (in_cgi_mode ? "CGI script" : "directory") << " on port " << port << std::endl;
 
 	while (true) {
 		ClientConnection client = server.accept_client_connection();
