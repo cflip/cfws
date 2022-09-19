@@ -55,10 +55,21 @@ static HttpResponse serve_from_cgi(const std::string& script_path, HttpRequest r
 	HttpResponse response;
 	response.add_header("Server", "cfws");
 
+	// Split URI between the path and the query parameter string
+	std::stringstream uri_stream(request.uri());
+	std::string segment;
+	std::vector<std::string> segment_list;
+
+	while (std::getline(uri_stream, segment, '?')) {
+		segment_list.push_back(segment);
+	}
+
 	CGIScript script(script_path);
 	script.set_environment("REQUEST_METHOD", "GET");
 	script.set_environment("REQUEST_URI", request.uri().c_str());
-	script.set_environment("PATH_INFO", request.uri().c_str());
+	script.set_environment("PATH_INFO", segment_list[0].c_str());
+	if (segment_list.size() > 1)
+		script.set_environment("QUERY_STRING", segment_list[1].c_str());
 	script.set_environment("CONTENT_LENGTH", "0");
 
 	if (!script.open()) {
