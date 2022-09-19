@@ -6,13 +6,14 @@
 
 CGIScript::CGIScript(const std::string& path, const HttpRequest& request)
 {
-	setenv("CONTENT_LENGTH", "0", true);
-	setenv("REQUEST_URI", request.uri().c_str(), true);
-	setenv("SCRIPT_NAME", path.c_str(), true);
-	setenv("SCRIPT_FILENAME", path.c_str(), true);
-	setenv("REQUEST_METHOD", "GET", true);
-	setenv("SERVER_PROTOCOL", "HTTP/1.1", true);
-	setenv("SERVER_SOFTWARE", "cfws/1.0-dev", true);
+	set_environment("CONTENT_LENGTH", "0");
+	set_environment("REQUEST_URI", request.uri().c_str());
+	set_environment("PATH_INFO", request.uri().c_str());
+	set_environment("SCRIPT_NAME", path.c_str());
+	set_environment("SCRIPT_FILENAME", path.c_str());
+	set_environment("REQUEST_METHOD", "GET");
+	set_environment("SERVER_PROTOCOL", "HTTP/1.1");
+	set_environment("SERVER_SOFTWARE", "cfws/1.0-dev");
 
 	m_pipe = popen(path.c_str(), "r");
 	if (!m_pipe) {
@@ -27,13 +28,14 @@ CGIScript::~CGIScript()
 {
 	pclose(m_pipe);
 
-	unsetenv("CONTENT_LENGTH");
-	unsetenv("REQUEST_URI");
-	unsetenv("SCRIPT_NAME");
-	unsetenv("SCRIPT_FILENAME");
-	unsetenv("REQUEST_METHOD");
-	unsetenv("SERVER_PROTOCOL");
-	unsetenv("SERVER_SOFTWARE");
+	for (auto key : m_environment_variables)
+		unsetenv(key);
+}
+
+void CGIScript::set_environment(const char* key, const char* value)
+{
+	m_environment_variables.push_back(key);
+	setenv(key, value, true);
 }
 
 std::string CGIScript::read_output()
