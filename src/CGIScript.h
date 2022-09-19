@@ -4,19 +4,18 @@
 #include <string>
 #include <vector>
 
-#include "HttpRequest.h"
-
 class CGIScript {
 public:
-	CGIScript(const std::string& path, const HttpRequest&);
+	CGIScript(const std::string& script_path);
 	~CGIScript();
 
 	void set_environment(const char* key, const char* value);
-	bool is_open() const { return m_is_open; }
+	bool open();
 
 	std::string read_output();
 private:
 	FILE* m_pipe;
+	const std::string& m_script_path;
 	bool m_is_open{false};
 
 	std::vector<const char*> m_environment_variables;

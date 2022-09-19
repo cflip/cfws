@@ -55,8 +55,13 @@ static HttpResponse serve_from_cgi(const std::string& script_path, HttpRequest r
 	HttpResponse response;
 	response.add_header("Server", "cfws");
 
-	CGIScript script(script_path, request);
-	if (!script.is_open()) {
+	CGIScript script(script_path);
+	script.set_environment("REQUEST_METHOD", "GET");
+	script.set_environment("REQUEST_URI", request.uri().c_str());
+	script.set_environment("PATH_INFO", request.uri().c_str());
+	script.set_environment("CONTENT_LENGTH", "0");
+
+	if (!script.open()) {
 		response.set_status_code(HttpStatusCode::InternalServerError);
 		response.add_header("Content-Type", "text/plain");
 		response.set_content("Failed to open CGI script!");
