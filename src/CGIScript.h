@@ -15,7 +15,7 @@ public:
 	std::string read_output();
 
 private:
-	FILE* m_pipe;
+	FILE* m_pipe {};
 	const std::string& m_script_path;
 	bool m_is_open { false };
 

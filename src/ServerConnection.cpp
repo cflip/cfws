@@ -1,8 +1,8 @@
 #include "ServerConnection.h"
 
 #include <arpa/inet.h>
+#include <csignal>
 #include <netdb.h>
-#include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -19,13 +19,13 @@ static void error_and_die(const char* message)
 
 ServerConnection::ServerConnection(int port)
 {
-	sockaddr_in address;
+	sockaddr_in address {};
 	int socket_options = 1;
 
 	if ((m_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		error_and_die("Failed to create socket");
 
-	if (setsockopt(m_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &socket_options, sizeof(socket_options)))
+	if (setsockopt(m_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &socket_options, sizeof(socket_options)) != 0)
 		error_and_die("setsockopt");
 
 	address.sin_family = AF_INET;
@@ -39,8 +39,8 @@ ServerConnection::ServerConnection(int port)
 		error_and_die("listen");
 }
 
-ClientConnection ServerConnection::accept_client_connection()
+ClientConnection ServerConnection::accept_client_connection() const
 {
 	int client_socket = accept(m_socket_fd, (sockaddr*)nullptr, nullptr);
-	return ClientConnection(client_socket);
+	return { client_socket };
 }

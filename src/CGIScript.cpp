@@ -17,20 +17,20 @@ CGIScript::~CGIScript()
 {
 	pclose(m_pipe);
 
-	for (auto key : m_environment_variables)
+	for (const auto* key : m_environment_variables)
 		unsetenv(key);
 }
 
 void CGIScript::set_environment(const char* key, const char* value)
 {
 	m_environment_variables.push_back(key);
-	setenv(key, value, true);
+	setenv(key, value, 1);
 }
 
 bool CGIScript::open()
 {
 	m_pipe = popen(m_script_path.c_str(), "r");
-	if (!m_pipe) {
+	if (m_pipe == nullptr) {
 		perror("cfws: popen");
 		return false;
 	}
@@ -43,7 +43,7 @@ std::string CGIScript::read_output()
 {
 	std::stringstream sstream;
 
-	char ch;
+	char ch = 0;
 	while ((ch = fgetc(m_pipe)) != EOF)
 		sstream << ch;
 

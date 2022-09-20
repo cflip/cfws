@@ -7,9 +7,9 @@ class ClientConnection {
 public:
 	ClientConnection(int socket);
 
-	HttpRequest read_request();
+	HttpRequest read_request() const;
 
-	bool send(const HttpResponse&);
+	bool send(const HttpResponse&) const;
 	void close_connection();
 
 private:

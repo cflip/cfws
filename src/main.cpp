@@ -10,7 +10,7 @@
 #include "HttpResponse.h"
 #include "ServerConnection.h"
 
-static HttpResponse serve_from_filesystem(HttpRequest request)
+static HttpResponse serve_from_filesystem(const HttpRequest& request)
 {
 	namespace fs = std::filesystem;
 
@@ -50,7 +50,7 @@ static HttpResponse serve_from_filesystem(HttpRequest request)
 	return response;
 }
 
-static HttpResponse serve_from_cgi(const std::string& script_path, HttpRequest request)
+static HttpResponse serve_from_cgi(const std::string& script_path, const HttpRequest& request)
 {
 	HttpResponse response;
 	response.add_header("Server", "cfws");
@@ -85,8 +85,8 @@ static HttpResponse serve_from_cgi(const std::string& script_path, HttpRequest r
 }
 
 static option long_options[] = {
-	{ "cgi", required_argument, NULL, 'c' },
-	{ "port", required_argument, NULL, 'p' },
+	{ "cgi", required_argument, nullptr, 'c' },
+	{ "port", required_argument, nullptr, 'p' },
 };
 
 int main(int argc, char** argv)
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
 	bool in_cgi_mode = false;
 	std::string cgi_program_name;
 
-	int c;
+	int c = 0;
 	int option_index = 0;
 	while ((c = getopt_long(argc, argv, "c:p:", long_options, &option_index)) != -1) {
 		switch (c) {

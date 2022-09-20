@@ -10,13 +10,13 @@ ClientConnection::ClientConnection(int socket)
 {
 }
 
-HttpRequest ClientConnection::read_request()
+HttpRequest ClientConnection::read_request() const
 {
 	// TODO: Clean up this code to ensure it works with multiple lines
 	//       and not risk a buffer overflow.
 	constexpr int BUFFER_SIZE = 4096;
 	char buffer[BUFFER_SIZE + 1];
-	int n;
+	int n = 0;
 
 	memset(buffer, 0, BUFFER_SIZE);
 	while ((n = read(m_socket_fd, buffer, BUFFER_SIZE - 1)) > 0) {
@@ -29,7 +29,7 @@ HttpRequest ClientConnection::read_request()
 	return HttpRequest(buffer);
 }
 
-bool ClientConnection::send(const HttpResponse& response)
+bool ClientConnection::send(const HttpResponse& response) const
 {
 	if (!m_is_open)
 		return false;
