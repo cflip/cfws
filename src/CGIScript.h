@@ -14,6 +14,8 @@ public:
 
 	std::string read_output();
 
+	static void validate_path(const std::string& path);
+
 private:
 	FILE* m_pipe {};
 	const std::string& m_script_path;

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "CGIScript.h"
 #include "ClientConnection.h"
@@ -114,6 +115,11 @@ int main(int argc, char** argv)
 			break;
 		}
 	}
+
+	// Check the script path to ensure that it is a valid executable
+	// script before attempting to start the server.
+	if (in_cgi_mode)
+		CGIScript::validate_path(cgi_program_name);
 
 	ServerConnection server(port);
 	std::cout << "Serving a " << (in_cgi_mode ? "CGI script" : "directory") << " on port " << port << std::endl;

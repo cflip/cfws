@@ -1,8 +1,11 @@
 #include "CGIScript.h"
 
 #include <cstdlib>
+#include <filesystem>
+#include <iostream>
 #include <sstream>
 #include <string>
+#include <unistd.h>
 
 CGIScript::CGIScript(const std::string& script_path)
 	: m_script_path(script_path)
@@ -48,4 +51,19 @@ std::string CGIScript::read_output()
 		sstream << ch;
 
 	return sstream.str();
+}
+
+void CGIScript::validate_path(const std::string& script_path)
+{
+	namespace fs = std::filesystem;
+
+	if (!fs::exists(script_path)) {
+		std::cerr << "cfws: Script not found: " << script_path << std::endl;
+		exit(1);
+	}
+
+	if (access(script_path.c_str(), X_OK)) {
+		std::cerr << "cfws: Script does not have execute permissions: " << script_path << std::endl;
+		exit(1);
+	}
 }
