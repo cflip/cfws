@@ -1,4 +1,6 @@
-# Ignore executable binary
-cfws
-
+# Ignore IDE and editor project files
 .vscode
+
+# Ignore build output
+cfws
+*.o

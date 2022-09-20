@@ -1,13 +1,24 @@
+CXX=g++
+LD=g++
+
 CFLAGS=-pedantic -Wall --std=c++17
 
-SRC=src/main.cpp \
-    src/CGIScript.cpp \
-    src/ClientConnection.cpp \
-    src/ServerConnection.cpp \
-    src/HttpRequest.cpp \
-    src/HttpResponse.cpp
+OBJS=src/main.o \
+    src/CGIScript.o \
+    src/ClientConnection.o \
+    src/ServerConnection.o \
+    src/HttpRequest.o \
+    src/HttpResponse.o
 
-OUT=cfws
+all: cfws
 
-$(OUT): $(SRC)
-	$(CXX) $(CFLAGS) -o $(OUT) $(SRC)
+%.o: %.cpp
+	$(CXX) $< -o $@ -c $(CFLAGS)
+
+cfws: $(OBJS)
+	$(LD) $^ -o $@ $(CFLAGS)
+
+.PHONY: clean
+
+clean:
+	rm -f $(OBJS) cfws
