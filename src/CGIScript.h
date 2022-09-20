@@ -13,10 +13,11 @@ public:
 	bool open();
 
 	std::string read_output();
+
 private:
 	FILE* m_pipe;
 	const std::string& m_script_path;
-	bool m_is_open{false};
+	bool m_is_open { false };
 
 	std::vector<const char*> m_environment_variables;
 };

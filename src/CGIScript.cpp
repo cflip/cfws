@@ -1,8 +1,8 @@
 #include "CGIScript.h"
 
 #include <cstdlib>
-#include <string>
 #include <sstream>
+#include <string>
 
 CGIScript::CGIScript(const std::string& script_path)
 	: m_script_path(script_path)

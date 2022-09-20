@@ -22,6 +22,7 @@ public:
 	void add_headers_and_content(const std::string&);
 
 	std::string to_string() const;
+
 private:
 	HttpStatusCode m_status_code;
 	std::map<std::string, std::string> m_headers;

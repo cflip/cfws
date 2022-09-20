@@ -48,7 +48,8 @@ std::string HttpResponse::to_string() const
 	string_stream << "HTTP/1.0 " << status_code_string(m_status_code) << "\r\n";
 	for (const auto& header : m_headers)
 		string_stream << header.first << ": " << header.second << "\r\n";
-	string_stream << "\r\n" << m_content;
+	string_stream << "\r\n"
+				  << m_content;
 
 	return string_stream.str();
 }

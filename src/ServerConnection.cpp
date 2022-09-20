@@ -1,13 +1,13 @@
 #include "ServerConnection.h"
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
 #include <arpa/inet.h>
-#include <sys/time.h>
-#include <sys/ioctl.h>
 #include <netdb.h>
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "ClientConnection.h"
 
@@ -26,11 +26,11 @@ ServerConnection::ServerConnection(int port)
 		error_and_die("Failed to create socket");
 
 	if (setsockopt(m_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &socket_options, sizeof(socket_options)))
-			error_and_die("setsockopt");
+		error_and_die("setsockopt");
 
-	address.sin_family      = AF_INET;
+	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = htonl(INADDR_ANY);
-	address.sin_port        = htons(port);
+	address.sin_port = htons(port);
 
 	if ((bind(m_socket_fd, (sockaddr*)&address, sizeof(address))) < 0)
 		error_and_die("bind");

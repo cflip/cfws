@@ -22,7 +22,6 @@ HttpRequest::HttpRequest(const std::string& request_string)
 			std::string header_key = s.substr(0, delim_pos);
 			std::string header_value = s.substr(delim_pos + 2, s.find("\r\n") - delim_pos - 2);
 			m_headers[header_key] = header_value;
-			//std::cout << "1?: {" << header_maybe << "}, 2?: {" << value_maybe << "}\n";
 		}
 		s.erase(0, pos + 2);
 	}
