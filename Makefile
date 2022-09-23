@@ -10,6 +10,8 @@ OBJS=src/main.o \
     src/HttpRequest.o \
     src/HttpResponse.o
 
+DESTDIR=/usr/local/bin/
+
 all: cfws
 
 %.o: %.cpp
@@ -22,3 +24,8 @@ cfws: $(OBJS)
 
 clean:
 	rm -f $(OBJS) cfws
+
+.PHONY: install
+
+install: all
+	install -m 0755 ./cfws -t $(DESTDIR)
