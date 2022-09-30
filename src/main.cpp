@@ -11,6 +11,21 @@
 #include "HttpResponse.h"
 #include "ServerConnection.h"
 
+static std::string content_type_for_extension(const std::filesystem::path& extension)
+{
+	if (extension == ".html")
+		return "text/html";
+	if (extension == ".css")
+		return "text/css";
+	if (extension == ".gif")
+		return "image/gif";
+	if (extension == ".png")
+		return "image/png";
+	if (extension == ".webp")
+		return "image/webp";
+	return "text/plain";
+}
+
 static HttpResponse serve_from_filesystem(const HttpRequest& request)
 {
 	namespace fs = std::filesystem;
@@ -40,7 +55,7 @@ static HttpResponse serve_from_filesystem(const HttpRequest& request)
 		std::string file_contents((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
 
 		response.set_status_code(HttpStatusCode::OK);
-		response.add_header("Content-Type", "text/plain");
+		response.add_header("Content-Type", content_type_for_extension(request_path.extension()));
 		response.set_content(file_contents);
 	} else {
 		response.set_status_code(HttpStatusCode::NotFound);
