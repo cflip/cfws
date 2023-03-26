@@ -39,7 +39,7 @@ static HttpResponse serve_from_filesystem(const HttpRequest& request)
 
 	// Remove leading slash from the path if it exists
 	std::string relative_request_path = request.uri();
-	while (*relative_request_path.begin() == '/')
+	while (relative_request_path.length() > 0 && *relative_request_path.begin() == '/')
 		relative_request_path.erase(0, 1);
 
 	fs::path request_path = fs::current_path() / relative_request_path;
