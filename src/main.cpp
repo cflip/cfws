@@ -1,11 +1,15 @@
+#ifndef _WIN32
 #include <getopt.h>
+#endif
 
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
+#ifndef _WIN32
 #include "CGIScript.h"
+#endif
 #include "ClientConnection.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
@@ -66,6 +70,7 @@ static HttpResponse serve_from_filesystem(const HttpRequest& request)
 	return response;
 }
 
+#ifndef _WIN32
 static HttpResponse serve_from_cgi(const std::string& script_path, const HttpRequest& request)
 {
 	HttpResponse response;
@@ -99,11 +104,14 @@ static HttpResponse serve_from_cgi(const std::string& script_path, const HttpReq
 	response.add_headers_and_content(script.read_output());
 	return response;
 }
+#endif
 
+#ifndef _WIN32
 static option long_options[] = {
 	{ "cgi", required_argument, nullptr, 'c' },
 	{ "port", required_argument, nullptr, 'p' },
 };
+#endif
 
 int main(int argc, char** argv)
 {
@@ -111,6 +119,8 @@ int main(int argc, char** argv)
 	bool in_cgi_mode = false;
 	std::string cgi_program_name;
 
+	// TODO: getopt.h is not available on Windows, so this part needs to be rewritten.
+#ifndef _WIN32
 	int c = 0;
 	int option_index = 0;
 	while ((c = getopt_long(argc, argv, "c:p:", long_options, &option_index)) != -1) {
@@ -135,6 +145,7 @@ int main(int argc, char** argv)
 	// script before attempting to start the server.
 	if (in_cgi_mode)
 		CGIScript::validate_path(cgi_program_name);
+#endif
 
 	ServerConnection server(port);
 	std::cout << "Serving a " << (in_cgi_mode ? "CGI script" : "directory") << " on port " << port << std::endl;
@@ -144,11 +155,14 @@ int main(int argc, char** argv)
 		HttpRequest request = client.read_request();
 		HttpResponse response;
 
+		// TODO: Support running CGI executables on Windows
+#ifndef _WIN32
 		if (in_cgi_mode) {
 			response = serve_from_cgi(cgi_program_name, request);
-		} else {
+		} else
+#endif
 			response = serve_from_filesystem(request);
-		}
+
 
 		client.send(response);
 		client.close_connection();

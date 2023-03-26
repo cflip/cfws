@@ -1,13 +1,17 @@
 #include "ServerConnection.h"
 
-#include <arpa/inet.h>
-#include <csignal>
-#include <netdb.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/types.h>
-#include <unistd.h>
+
+#ifdef _WIN32
+	#include <winsock2.h>
+	#pragma comment(lib, "ws2_32.lib")
+#else
+	#include <arpa/inet.h>
+	#include <sys/ioctl.h>
+	#include <sys/socket.h>
+	#include <sys/time.h>
+	#include <unistd.h>
+#endif
 
 #include "ClientConnection.h"
 
@@ -19,14 +23,22 @@ static void error_and_die(const char* message)
 
 ServerConnection::ServerConnection(int port)
 {
+#ifdef _WIN32
+	WSADATA wsaData;
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+		error_and_die("Failed to initialize Winsock");
+#endif
+
 	sockaddr_in address {};
 	int socket_options = 1;
 
 	if ((m_socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		error_and_die("Failed to create socket");
 
+#ifndef _WIN32
 	if (setsockopt(m_socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &socket_options, sizeof(socket_options)) != 0)
 		error_and_die("setsockopt");
+#endif
 
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = htonl(INADDR_ANY);

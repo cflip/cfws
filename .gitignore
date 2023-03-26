@@ -1,6 +1,8 @@
 # Ignore IDE and editor project files
 .vscode
+.vs
 
 # Ignore build output
+build/
 cfws
 *.o
