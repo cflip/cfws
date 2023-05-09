@@ -1,31 +1,25 @@
-CXX=g++
-LD=g++
+CC=gcc
+LD=gcc
 
-CFLAGS=-pedantic -Wall --std=c++17
+CFLAGS=-Wall -Wextra -pedantic -std=c89
+LDFLAGS=
 
-OBJS=src/main.o \
-    src/CGIScript.o \
-    src/ClientConnection.o \
-    src/ServerConnection.o \
-    src/HttpRequest.o \
-    src/HttpResponse.o
+OBJS=cfws.o http.o
 
 DESTDIR=/usr/local/bin/
 
+.PHONY: all clean install
+
 all: cfws
 
-%.o: %.cpp
-	$(CXX) $< -o $@ -c $(CFLAGS)
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 cfws: $(OBJS)
-	$(LD) $^ -o $@ $(CFLAGS)
-
-.PHONY: clean
+	$(LD) $(LDFLAGS) $^ -o $@
 
 clean:
 	rm -f $(OBJS) cfws
-
-.PHONY: install
 
 install: all
 	install -m 0755 ./cfws -t $(DESTDIR)
