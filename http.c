@@ -30,8 +30,7 @@ void http_free_request(struct http_request *req)
 	free(req->uri);
 }
 
-void http_build_response(char **res, enum http_res_code code, const char *msg)
+int http_build_response(char *res, enum http_res_code code, const char *msg, size_t msglen)
 {
-	*res = malloc(128);
-	sprintf(*res, "HTTP/1.1 200 OK\r\n\r\n%s\r\n", msg);
+	return snprintf(res, CFWS_MAX_RESPONSE, "HTTP/1.1 200 OK\r\n\r\n%.*s\r\n", msglen, msg);
 }

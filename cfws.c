@@ -1,4 +1,6 @@
 #include <arpa/inet.h>
+#include <errno.h>
+#include <linux/limits.h>
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
@@ -6,6 +8,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -16,6 +19,8 @@
 #define CFWS_MAXREAD 1024 /* Size of buffer used for reading from client. */
 
 #define CFWS_DEFAULT_PORT 8080
+
+size_t file_read(const char *, char **);
 
 int  initialize_server(int);
 void handle_connection();
@@ -39,6 +44,44 @@ int main(int argc, char *argv[])
 
 	close(serverfd);
 	return 0;
+}
+
+size_t file_read(const char *uri_path, char **buffer)
+{
+	FILE *fp;
+	struct stat statbuf;
+	char path[PATH_MAX];
+	long len;
+
+	/* Prepend the current working directory to the uri path */
+	getcwd(path, PATH_MAX);
+	strncat(path, uri_path, PATH_MAX - 1);
+
+	/* Append 'index.html' to directory paths. */
+	stat(path, &statbuf);
+	if (S_ISDIR(statbuf.st_mode))
+		strcat(path, "index.html");
+
+	fp = fopen(path, "rb");
+	if (fp == NULL) {
+		/*
+		 * File not found is a very common and harmless error, so
+		 * there's no need to print it out every time.
+		 */
+		if (errno != ENOENT)
+			perror("Failed to open file");
+		return 0;
+	}
+
+	fseek(fp, 0, SEEK_END);
+	len = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	*buffer = malloc(len);
+	fread(*buffer, 1, len, fp);
+
+	fclose(fp);
+	return len;
 }
 
 int initialize_server(int port)
@@ -81,8 +124,10 @@ int initialize_server(int port)
 
 void handle_connection(int connfd)
 {
-	char msgbuf[128];
-	char *resbuf;
+	char *content_buf;
+	size_t content_len, response_len;
+
+	char resbuf[CFWS_MAX_RESPONSE];
 	char readbuf[CFWS_MAXREAD];
 	struct http_request req;
 
@@ -91,12 +136,17 @@ void handle_connection(int connfd)
 
 	req = http_parse_request(readbuf);
 
-	snprintf(msgbuf, 128, "Welcome to %s", req.uri);
+	content_len = file_read(req.uri, &content_buf);
+	if (content_len == 0) {
+		const char *msg = "Could not find the specified file.";
+		response_len = http_build_response(resbuf,
+				HTTP_RESPONSE_NOTFOUND, msg, strlen(msg));
+	} else {
+		response_len = http_build_response(resbuf, HTTP_RESPONSE_OK,
+				content_buf, content_len);
+		free(content_buf);
+	}
 
-	http_build_response(&resbuf, HTTP_RESPONSE_OK, msgbuf);
-	write(connfd, resbuf, strlen(resbuf));
-
-	free(resbuf);
+	write(connfd, resbuf, response_len);
 	http_free_request(&req);
 }
-
