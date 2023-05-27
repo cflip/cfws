@@ -4,7 +4,7 @@ LD=gcc
 CFLAGS=-Wall -Wextra -pedantic -std=c89 -g
 LDFLAGS=
 
-OBJS=cfws.o http.o
+OBJS=cfws.o file.o http.o net.o
 
 DESTDIR=/usr/local/bin/
 
