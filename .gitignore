@@ -1,5 +1,7 @@
-# Ignore IDE and editor project files
+# Ignore IDE and editor files
 .vscode
+*.swp
+tags
 
 # Ignore build output
 cfws
