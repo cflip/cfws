@@ -1,7 +1,7 @@
 CC=gcc
 LD=gcc
 
-CFLAGS=-Wall -Wextra -pedantic -std=c89
+CFLAGS=-Wall -Wextra -pedantic -std=c89 -g
 LDFLAGS=
 
 OBJS=cfws.o http.o
