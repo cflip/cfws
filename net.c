@@ -10,10 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "file.h"
-#include "http.h"
-
-int initialize_server(int port)
+int net_init_server(int port)
 {
 	struct sockaddr_in addr;
 	int rc;
@@ -42,7 +39,7 @@ int initialize_server(int port)
 		return -1;
 	}
 
-	rc = listen(sockfd, CFWS_MAXCONN);
+	rc = listen(sockfd, CFWS_NET_MAXCONN);
 	if (rc == -1) {
 		perror("Failed to listen on server socket");
 		return -1;
@@ -51,46 +48,19 @@ int initialize_server(int port)
 	return sockfd;
 }
 
-void handle_connection(int connfd)
+struct http_request net_next_request(int serverfd, int *clientfd)
 {
-	char readbuf[CFWS_MAXREAD];
+	int connfd;
+	char readbuf[CFWS_NET_MAXREAD];
 	struct http_request req;
 
-	char *filepath;
-	enum http_res_code res_code;
-	enum serve_method method;
+	connfd = accept(serverfd, NULL, NULL);
 
 	/* Read and parse the HTTP request */
-	memset(readbuf, 0, CFWS_MAXREAD);
-	read(connfd, readbuf, CFWS_MAXREAD - 1);
+	memset(readbuf, 0, CFWS_NET_MAXREAD);
+	read(connfd, readbuf, CFWS_NET_MAXREAD - 1);
 	req = http_parse_request(readbuf);
 
-	/* Get the local file path for the given URI. */
-	filepath = file_path_for_uri(req.uri);
-
-	printf("GET %s : %s\n", req.uri, filepath);
-
-	/* Determine the method that should be used to serve this file */
-	method = file_method_for_path(filepath, &res_code);
-
-	/* Write the HTTP response status and any required headers */
-	http_response_statusline(res_code, connfd);
-
-	/* Use the chosen method to fill in the rest of the response */
-	switch (method) {
-	case SERVE_METHOD_FILE:
-		file_read(filepath, connfd);
-		break;
-	case SERVE_METHOD_PHP:
-		file_read_php(filepath, connfd);
-		break;
-	case SERVE_METHOD_ERROR: {
-		const char *errmsg = "Content-Type: text/plain\r\n\r\nEpic fail";
-		write(connfd, errmsg, strlen(errmsg));
-		break;
-	}
-	}
-
-	free(filepath);
-	http_free_request(&req);
+	*clientfd = connfd;
+	return req;
 }
