@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#define FILE_READBUF_SIZE 1024
+
 const char *file_path_for_uri(const char *uri)
 {
 	struct stat statbuf;
@@ -48,7 +50,10 @@ enum serve_method file_method_for_path(const char *filepath, enum http_res_code 
 int file_read(const char *filepath, int sockfd)
 {
 	FILE *fp;
-	char ch;
+	char buffer[FILE_READBUF_SIZE];
+	size_t bytes_read;
+
+	const char *content_type = "Content-Type: text/html\r\n\r\n";
 
 	fp = fopen(filepath, "rb");
 	if (fp == NULL) {
@@ -56,11 +61,9 @@ int file_read(const char *filepath, int sockfd)
 		return 1;
 	}
 
-	write(sockfd, "Content-Type: text/html\r\n\r\n", 27);
-	/* TODO: Implement a buffered read from FILE* function */
-	while ((ch = fgetc(fp)) != EOF) {
-		write(sockfd, &ch, 1);
-	}
+	write(sockfd, content_type, strlen(content_type));
+	while ((bytes_read = fread(buffer, 1, FILE_READBUF_SIZE, fp)) > 0)
+		write(sockfd, buffer, bytes_read);
 
 	fclose(fp);
 	return 0;
@@ -70,7 +73,8 @@ int file_read_php(const char *filepath, int sockfd)
 {
 	FILE *fp;
 	char cmdbuf[PATH_MAX];
-	char ch;
+	char buffer[FILE_READBUF_SIZE];
+	size_t bytes_read;
 
 	strcpy(cmdbuf, "php-cgi ");
 	strcat(cmdbuf, filepath);
@@ -83,10 +87,8 @@ int file_read_php(const char *filepath, int sockfd)
 		return 1;
 	}
 
-	/* TODO: Implement a buffered read from FILE* function */
-	while ((ch = fgetc(fp)) != EOF) {
-		write(sockfd, &ch, 1);
-	}
+	while ((bytes_read = fread(buffer, 1, FILE_READBUF_SIZE, fp)) > 0)
+		write(sockfd, buffer, bytes_read);
 
 	pclose(fp);
 	return 0;
