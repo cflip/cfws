@@ -8,81 +8,82 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int file_handle_request(struct http_request *req, int sockfd)
+const char *file_path_for_uri(const char *uri)
 {
-	if (strstr(req->uri, ".php") != 0) {
-		return file_read_cgi(req->uri, sockfd);
-	}
-	return file_read(req->uri, sockfd);
-}
-
-int file_read(const char *uri_path, int sockfd)
-{
-	/* TODO: Implement this again */
-	return 1;
-
-	FILE *fp;
 	struct stat statbuf;
 	char path[PATH_MAX];
-	long len;
+	size_t result_len;
+	char *result;
 
-	/* Prepend the current working directory to the uri path */
 	getcwd(path, PATH_MAX);
-	strncat(path, uri_path, PATH_MAX - 1);
+	strncat(path, uri, PATH_MAX - 1);
 
-	/* Append 'index.html' to directory paths. */
+	/* Append 'index.html' if this is a directory */
 	stat(path, &statbuf);
 	if (S_ISDIR(statbuf.st_mode))
 		strcat(path, "index.html");
 
-	fp = fopen(path, "rb");
-	if (fp == NULL) {
-		/*
-		 * File not found is a very common and harmless error, so
-		 * there's no need to print it out every time.
-		 */
-		if (errno != ENOENT)
-			perror("Failed to open file");
-		return 0;
-	}
-
-	fseek(fp, 0, SEEK_END);
-	len = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-
-	/*buffer = malloc(len);*/
-	/*fread(*buffer, 1, len, fp);*/
-
-	fclose(fp);
-	return len;
+	/* Allocate a string with only the needed size */
+	result_len = strlen(path);
+	result = malloc(result_len + 1);
+	memcpy(result, path, result_len);
+	result[result_len] = '\0';
+	return result;
 }
 
-int file_read_cgi(const char *uri_path, int sockfd)
+enum serve_method file_method_for_path(const char *filepath, enum http_res_code *code)
 {
-	/* TODO: Lazy copy paste just to get it working */
+	if (access(filepath, F_OK) != 0) {
+		*code = HTTP_RESPONSE_NOTFOUND;
+		return SERVE_METHOD_ERROR;
+	}
+
+	*code = HTTP_RESPONSE_OK;
+	if (strstr(filepath, ".php") != 0)
+		return SERVE_METHOD_PHP;
+
+	return SERVE_METHOD_FILE;
+}
+
+int file_read(const char *filepath, int sockfd)
+{
 	FILE *fp;
-	struct stat statbuf;
-	char cmdbuf[PATH_MAX];
-	char path[PATH_MAX];
 	char ch;
 
-	/* Prepend the current working directory to the uri path */
-	getcwd(path, PATH_MAX);
-	strncat(path, uri_path, PATH_MAX - 1);
-
-	/* Append 'index.php' to directory paths. */
-	stat(path, &statbuf);
-	if (S_ISDIR(statbuf.st_mode))
-		strcat(path, "index.php");
-
-	strcpy(cmdbuf, "php-cgi ");
-	strcat(cmdbuf, path);
-
-	fp = popen(cmdbuf, "r");
+	fp = fopen(filepath, "rb");
 	if (fp == NULL) {
+		perror("Failed to open file");
 		return 1;
 	}
 
+	write(sockfd, "Content-Type: text/html\r\n\r\n", 27);
+	/* TODO: Implement a buffered read from FILE* function */
+	while ((ch = fgetc(fp)) != EOF) {
+		write(sockfd, &ch, 1);
+	}
+
+	fclose(fp);
+	return 0;
+}
+
+int file_read_php(const char *filepath, int sockfd)
+{
+	FILE *fp;
+	char cmdbuf[PATH_MAX];
+	char ch;
+
+	strcpy(cmdbuf, "php-cgi ");
+	strcat(cmdbuf, filepath);
+
+	printf("r %s\n", cmdbuf);
+
+	fp = popen(cmdbuf, "r");
+	if (fp == NULL) {
+		perror("Failed to read command");
+		return 1;
+	}
+
+	/* TODO: Implement a buffered read from FILE* function */
 	while ((ch = fgetc(fp)) != EOF) {
 		write(sockfd, &ch, 1);
 	}

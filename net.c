@@ -53,20 +53,44 @@ int initialize_server(int port)
 
 void handle_connection(int connfd)
 {
-	const char *header = "HTTP/1.1 200 OK\r\n";
 	char readbuf[CFWS_MAXREAD];
 	struct http_request req;
 
+	char *filepath;
+	enum http_res_code res_code;
+	enum serve_method method;
+
+	/* Read and parse the HTTP request */
 	memset(readbuf, 0, CFWS_MAXREAD);
 	read(connfd, readbuf, CFWS_MAXREAD - 1);
-
 	req = http_parse_request(readbuf);
 
-	write(connfd, header, strlen(header));
-	if (file_handle_request(&req, connfd) != 0) {
-		const char *msg = "\r\nCould not find the specified file.";
-		write(connfd, msg, strlen(msg));
+	/* Get the local file path for the given URI. */
+	filepath = file_path_for_uri(req.uri);
+
+	printf("GET %s : %s\n", req.uri, filepath);
+
+	/* Determine the method that should be used to serve this file */
+	method = file_method_for_path(filepath, &res_code);
+
+	/* Write the HTTP response status and any required headers */
+	http_response_statusline(res_code, connfd);
+
+	/* Use the chosen method to fill in the rest of the response */
+	switch (method) {
+	case SERVE_METHOD_FILE:
+		file_read(filepath, connfd);
+		break;
+	case SERVE_METHOD_PHP:
+		file_read_php(filepath, connfd);
+		break;
+	case SERVE_METHOD_ERROR: {
+		const char *errmsg = "Content-Type: text/plain\r\n\r\nEpic fail";
+		write(connfd, errmsg, strlen(errmsg));
+		break;
+	}
 	}
 
+	free(filepath);
 	http_free_request(&req);
 }

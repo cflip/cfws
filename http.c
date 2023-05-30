@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 struct http_request http_parse_request(const char *reqstr)
 {
@@ -30,7 +31,15 @@ void http_free_request(struct http_request *req)
 	free(req->uri);
 }
 
-int http_build_response(char *res, enum http_res_code code, const char *msg, size_t msglen)
+static const char *response_msg[2] = {
+	"200 OK",
+	"404 Not Found"
+};
+
+void http_response_statusline(enum http_res_code status_code, int sockfd)
 {
-	return snprintf(res, CFWS_MAX_RESPONSE, "HTTP/1.1 200 OK\r\n%.*s\r\n", msglen, msg);
+	char statusline[64];
+	int len;
+	len = snprintf(statusline, 64, "HTTP/1.1 %s\r\n", response_msg[status_code]);
+	write(sockfd, statusline, len);
 }
