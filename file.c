@@ -8,8 +8,19 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-size_t file_read(const char *uri_path, char **buffer)
+int file_handle_request(struct http_request *req, int sockfd)
 {
+	if (strstr(req->uri, ".php") != 0) {
+		return file_read_cgi(req->uri, sockfd);
+	}
+	return file_read(req->uri, sockfd);
+}
+
+int file_read(const char *uri_path, int sockfd)
+{
+	/* TODO: Implement this again */
+	return 1;
+
 	FILE *fp;
 	struct stat statbuf;
 	char path[PATH_MAX];
@@ -39,9 +50,43 @@ size_t file_read(const char *uri_path, char **buffer)
 	len = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	*buffer = malloc(len);
-	fread(*buffer, 1, len, fp);
+	/*buffer = malloc(len);*/
+	/*fread(*buffer, 1, len, fp);*/
 
 	fclose(fp);
 	return len;
+}
+
+int file_read_cgi(const char *uri_path, int sockfd)
+{
+	/* TODO: Lazy copy paste just to get it working */
+	FILE *fp;
+	struct stat statbuf;
+	char cmdbuf[PATH_MAX];
+	char path[PATH_MAX];
+	char ch;
+
+	/* Prepend the current working directory to the uri path */
+	getcwd(path, PATH_MAX);
+	strncat(path, uri_path, PATH_MAX - 1);
+
+	/* Append 'index.php' to directory paths. */
+	stat(path, &statbuf);
+	if (S_ISDIR(statbuf.st_mode))
+		strcat(path, "index.php");
+
+	strcpy(cmdbuf, "php-cgi ");
+	strcat(cmdbuf, path);
+
+	fp = popen(cmdbuf, "r");
+	if (fp == NULL) {
+		return 1;
+	}
+
+	while ((ch = fgetc(fp)) != EOF) {
+		write(sockfd, &ch, 1);
+	}
+
+	pclose(fp);
+	return 0;
 }

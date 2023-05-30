@@ -53,10 +53,7 @@ int initialize_server(int port)
 
 void handle_connection(int connfd)
 {
-	char *content_buf;
-	size_t content_len, response_len;
-
-	char resbuf[CFWS_MAX_RESPONSE];
+	const char *header = "HTTP/1.1 200 OK\r\n";
 	char readbuf[CFWS_MAXREAD];
 	struct http_request req;
 
@@ -65,17 +62,11 @@ void handle_connection(int connfd)
 
 	req = http_parse_request(readbuf);
 
-	content_len = file_read(req.uri, &content_buf);
-	if (content_len == 0) {
-		const char *msg = "Could not find the specified file.";
-		response_len = http_build_response(resbuf,
-				HTTP_RESPONSE_NOTFOUND, msg, strlen(msg));
-	} else {
-		response_len = http_build_response(resbuf, HTTP_RESPONSE_OK,
-				content_buf, content_len);
-		free(content_buf);
+	write(connfd, header, strlen(header));
+	if (file_handle_request(&req, connfd) != 0) {
+		const char *msg = "\r\nCould not find the specified file.";
+		write(connfd, msg, strlen(msg));
 	}
 
-	write(connfd, resbuf, response_len);
 	http_free_request(&req);
 }
