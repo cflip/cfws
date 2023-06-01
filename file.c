@@ -69,19 +69,18 @@ int file_read(const char *filepath, int sockfd)
 	return 0;
 }
 
-int file_read_php(const char *filepath, int sockfd)
+int file_read_php(const char *filepath, const char *query_str, int sockfd)
 {
 	FILE *fp;
-	char cmdbuf[PATH_MAX];
 	char buffer[FILE_READBUF_SIZE];
 	size_t bytes_read;
 
-	strcpy(cmdbuf, "php-cgi ");
-	strcat(cmdbuf, filepath);
+	setenv("REQUEST_METHOD", "GET", 1);
+	setenv("SCRIPT_FILENAME", filepath, 1);
+	if (query_str)
+		setenv("QUERY_STRING", query_str, 1);
 
-	printf("r %s\n", cmdbuf);
-
-	fp = popen(cmdbuf, "r");
+	fp = popen("php-cgi", "r");
 	if (fp == NULL) {
 		perror("Failed to read command");
 		return 1;
