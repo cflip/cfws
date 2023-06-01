@@ -47,13 +47,32 @@ enum serve_method file_method_for_path(const char *filepath, enum http_res_code 
 	return SERVE_METHOD_FILE;
 }
 
+static const char *mime_type_for_path(const char *filepath)
+{
+	const char *ext = strrchr(filepath, '.');
+	if (strcmp(ext, ".html") == 0)
+		return "text/html";
+	if (strcmp(ext, ".css") == 0)
+		return "text/css";
+	if (strcmp(ext, ".js") == 0)
+		return "text/javascript";
+	if (strcmp(ext, ".png") == 0)
+		return "image/png";
+	if (strcmp(ext, ".gif") == 0)
+		return "image/gif";
+	if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".jpeg") == 0)
+		return "image/jpeg";
+	if (strcmp(ext, ".webp") == 0)
+		return "image/webp";
+	return "text/plain";
+}
+
 int file_read(const char *filepath, int sockfd)
 {
 	FILE *fp;
 	char buffer[FILE_READBUF_SIZE];
+	const char *mime_type;
 	size_t bytes_read;
-
-	const char *content_type = "Content-Type: text/html\r\n\r\n";
 
 	fp = fopen(filepath, "rb");
 	if (fp == NULL) {
@@ -61,7 +80,11 @@ int file_read(const char *filepath, int sockfd)
 		return 1;
 	}
 
-	write(sockfd, content_type, strlen(content_type));
+	mime_type = mime_type_for_path(filepath);
+	write(sockfd, "Content-Type: ", 14);
+	write(sockfd, mime_type, strlen(mime_type));
+	write(sockfd, "\r\n\r\n", 4);
+
 	while ((bytes_read = fread(buffer, 1, FILE_READBUF_SIZE, fp)) > 0)
 		write(sockfd, buffer, bytes_read);
 
