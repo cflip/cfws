@@ -18,6 +18,7 @@ enum http_res_code {
 struct http_request {
 	int method;
 	char *uri;
+	char *query_str;
 };
 
 struct http_request http_parse_request(const char *);

@@ -8,18 +8,47 @@
 
 struct http_request http_parse_request(const char *reqstr)
 {
-	struct http_request req;
 	char uribuf[CFWS_MAXURI];
-	size_t urilen;
+	size_t urilen = 0, query_len = 0;
+	const char *counter;
 
-	sscanf(reqstr, "GET %s HTTP/1.1", uribuf);
+	struct http_request req;
+	req.method    = HTTP_METHOD_GET;
+	req.uri       = NULL;
+	req.query_str = NULL;
 
-	/* TODO: Support other method types, notably POST */
-	req.method = HTTP_METHOD_GET;
+	/* TODO: Support other request methods such as POST */
+	if (strncmp(reqstr, "GET ", 4) != 0) {
+		fprintf(stderr, "Unhandled request type: %s\n", reqstr);
+		return req;
+	}
 
-	urilen = strlen(uribuf);
+	counter = reqstr + 4;
+	while (*counter != ' ' && *counter != '?' && *counter != 0
+			&& urilen < CFWS_MAXURI) {
+		uribuf[urilen++] = *counter;
+		++counter;
+	}
+
 	req.uri = malloc(urilen + 1);
-	memcpy(req.uri, uribuf, urilen + 1);
+	memcpy(req.uri, uribuf, urilen);
+	req.uri[urilen] = '\0';
+
+	/* Parse the query string if one exists. */
+	if (*counter == '?') {
+		/* Skip the question mark at the beginning. */
+		counter++;
+
+		while (*counter != ' ' && *counter != 0
+				&& query_len < CFWS_MAXURI) {
+			uribuf[query_len++] = *counter;
+			++counter;
+		}
+
+		req.query_str = malloc(query_len + 1);
+		memcpy(req.query_str, uribuf, query_len);
+		req.query_str[query_len] = '\0';
+	}
 	
 	/* TODO: Parse request headers */
 
@@ -29,6 +58,8 @@ struct http_request http_parse_request(const char *reqstr)
 void http_free_request(struct http_request *req)
 {
 	free(req->uri);
+	if (req->query_str)
+		free(req->query_str);
 }
 
 static const char *response_msg[2] = {
