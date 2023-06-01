@@ -1,6 +1,0 @@
----
-Language: Cpp
-BasedOnStyle: WebKit
-UseTab: Always
-TabWidth: 4
-PackConstructorInitializers: NextLine
