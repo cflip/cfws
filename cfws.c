@@ -39,13 +39,21 @@ int main(int argc, char *argv[])
 
 static void handle_request(const struct http_request *req, int sockfd)
 {
-	char *filepath;
+	char *filepath = NULL;
 	enum http_res_code res_code;
 	enum serve_method method;
 
-	/* Find the local path for the resource and decide how to serve it. */
-	filepath = file_path_for_uri(req->uri);
-	method = file_method_for_path(filepath, &res_code);
+	if (req->method == HTTP_METHOD_UNKNOWN) {
+		method = SERVE_METHOD_ERROR;
+		res_code = HTTP_RESPONSE_NOTIMPLEMENTED;
+	} else if (req->uri == NULL) {
+		method = SERVE_METHOD_ERROR;
+		res_code = HTTP_RESPONSE_BADREQUEST;
+	} else {
+		/* Find the local path for the resource and decide how to serve it. */
+		filepath = file_path_for_uri(req->uri);
+		method = file_method_for_path(filepath, &res_code);
+	}
 
 	/* Write the status line and (TODO) extra headers */
 	http_response_statusline(res_code, sockfd);
@@ -65,5 +73,6 @@ static void handle_request(const struct http_request *req, int sockfd)
 	}
 	}
 
-	free(filepath);
+	if (filepath)
+		free(filepath);
 }

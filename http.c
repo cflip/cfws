@@ -13,7 +13,7 @@ struct http_request http_parse_request(const char *reqstr)
 	const char *counter;
 
 	struct http_request req;
-	req.method    = HTTP_METHOD_GET;
+	req.method    = HTTP_METHOD_UNKNOWN;
 	req.uri       = NULL;
 	req.query_str = NULL;
 
@@ -22,6 +22,8 @@ struct http_request http_parse_request(const char *reqstr)
 		fprintf(stderr, "Unhandled request type: %s\n", reqstr);
 		return req;
 	}
+
+	req.method = HTTP_METHOD_GET;
 
 	counter = reqstr + 4;
 	while (*counter != ' ' && *counter != '?' && *counter != 0
@@ -62,9 +64,11 @@ void http_free_request(struct http_request *req)
 		free(req->query_str);
 }
 
-static const char *response_msg[2] = {
+static const char *response_msg[] = {
 	"200 OK",
-	"404 Not Found"
+	"400 Bad Request",
+	"404 Not Found",
+	"501 Not Implemented"
 };
 
 void http_response_statusline(enum http_res_code status_code, int sockfd)
