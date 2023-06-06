@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +18,10 @@ int main(int argc, char *argv[])
 	int port = CFWS_DEFAULT_PORT;
 	int serverfd, clientfd;
 	struct http_request request;
+
+	/* Prevent the program from quitting if it attempts to write to a closed
+	 * socket. */
+	signal(SIGPIPE, SIG_IGN);
 
 	serverfd = net_init_server(port);
 	if (serverfd == -1)

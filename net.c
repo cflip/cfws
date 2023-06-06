@@ -23,9 +23,11 @@ int net_init_server(int port)
 		return -1;
 	}
 
-	/* Allow the port to be reused, prevents errors when quickly starting
-	 * and restarting the server. */
-	/* TODO: Also use SO_REUSEPORT? */
+	/*
+	 * Set SO_REUSEADDR to allow the port to be reused, preventing errors
+	 * when quickly starting and restarting the server. SO_REUSEPORT and
+	 * SO_NOSIGPIPE would also be nice, but they are not supported on Linux.
+	 */
 	setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &sockopts, sizeof(int));
 
 	memset(&addr, 0, sizeof(struct sockaddr_in));
