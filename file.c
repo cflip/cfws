@@ -112,6 +112,8 @@ int file_read_php(const char *filepath, const char *query_str, int sockfd)
 	while ((bytes_read = fread(buffer, 1, FILE_READBUF_SIZE, fp)) > 0)
 		write(sockfd, buffer, bytes_read);
 
+	unsetenv("QUERY_STRING");
+
 	pclose(fp);
 	return 0;
 }
