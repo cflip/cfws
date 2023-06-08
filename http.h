@@ -8,7 +8,8 @@
 
 enum http_req_method {
 	HTTP_METHOD_UNKNOWN,
-	HTTP_METHOD_GET
+	HTTP_METHOD_GET,
+	HTTP_METHOD_POST
 };
 
 enum http_res_code {
@@ -22,6 +23,7 @@ struct http_request {
 	int method;
 	char *uri;
 	char *query_str;
+	char *body;
 };
 
 struct http_request http_parse_request(const char *);

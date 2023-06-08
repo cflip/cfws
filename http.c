@@ -16,16 +16,19 @@ struct http_request http_parse_request(const char *reqstr)
 	req.method    = HTTP_METHOD_UNKNOWN;
 	req.uri       = NULL;
 	req.query_str = NULL;
+	req.body      = NULL;
 
-	/* TODO: Support other request methods such as POST */
-	if (strncmp(reqstr, "GET ", 4) != 0) {
+	if (strncmp(reqstr, "GET ", 4) == 0) {
+		req.method = HTTP_METHOD_GET;
+		counter = reqstr + 4;
+	} else if (strncmp(reqstr, "POST ", 5) == 0) {
+		req.method = HTTP_METHOD_POST;
+		counter = reqstr + 5;
+	} else {
 		fprintf(stderr, "Unhandled request type: %s\n", reqstr);
 		return req;
 	}
 
-	req.method = HTTP_METHOD_GET;
-
-	counter = reqstr + 4;
 	while (*counter != ' ' && *counter != '?' && *counter != 0
 			&& urilen < CFWS_MAXURI) {
 		uribuf[urilen++] = *counter;
@@ -52,7 +55,17 @@ struct http_request http_parse_request(const char *reqstr)
 		req.query_str[query_len] = '\0';
 	}
 	
-	/* TODO: Parse request headers */
+	/* TODO: Parse request headers. For now they are just ignored. */
+	counter = strstr(reqstr, "\r\n\r\n");
+	if (req.method == HTTP_METHOD_POST) {
+		size_t body_len;
+		counter += 4;
+
+		body_len = strlen(counter);
+		req.body = malloc(body_len + 1);
+		memcpy(req.body, counter, body_len);
+		req.body[body_len] = '\0';
+	}
 
 	return req;
 }
@@ -62,6 +75,8 @@ void http_free_request(struct http_request *req)
 	free(req->uri);
 	if (req->query_str)
 		free(req->query_str);
+	if (req->body)
+		free(req->body);
 }
 
 static const char *response_msg[] = {
