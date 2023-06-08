@@ -63,6 +63,8 @@ enum serve_method file_method_for_path(const char *filepath, enum http_res_code 
 static const char *mime_type_for_path(const char *filepath)
 {
 	const char *ext = strrchr(filepath, '.');
+	if (ext == NULL)
+		return "text/plain";
 	if (strcmp(ext, ".html") == 0)
 		return "text/html";
 	if (strcmp(ext, ".css") == 0)
