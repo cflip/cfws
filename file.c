@@ -10,6 +10,8 @@
 
 #define FILE_READBUF_SIZE 1024
 
+static const char *index_names[] = { "index.html", "index.php", NULL };
+
 const char *file_path_for_uri(const char *uri)
 {
 	struct stat statbuf;
@@ -20,10 +22,21 @@ const char *file_path_for_uri(const char *uri)
 	getcwd(path, PATH_MAX);
 	strncat(path, uri, PATH_MAX - 1);
 
-	/* Append 'index.html' if this is a directory */
+	/* Look for an index file if this is a directory */
 	stat(path, &statbuf);
-	if (S_ISDIR(statbuf.st_mode))
-		strcat(path, "index.html");
+	if (S_ISDIR(statbuf.st_mode)) {
+		size_t dir_index = strlen(path);
+		for (int i = 0; index_names[i] != NULL; i++) {
+			strcat(path, index_names[i]);
+			if (access(path, F_OK) == 0) {
+				/* We found an index file. */
+				break;
+			}
+			/* Put the null terminator back where it was and try
+			 * again with a different file name. */
+			path[dir_index] = '\0';
+		}
+	}
 
 	/* Allocate a string with only the needed size */
 	result_len = strlen(path);
