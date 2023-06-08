@@ -69,7 +69,7 @@ static void handle_request(const struct http_request *req, int sockfd)
 		file_read(filepath, sockfd);
 		break;
 	case SERVE_METHOD_PHP:
-		file_read_php(filepath, req->query_str, sockfd);
+		file_read_php(filepath, req, sockfd);
 		break;
 	case SERVE_METHOD_ERROR: {
 		const char *errmsg = "Content-Type: text/plain\r\n\r\nEpic fail";

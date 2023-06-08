@@ -92,28 +92,93 @@ int file_read(const char *filepath, int sockfd)
 	return 0;
 }
 
-int file_read_php(const char *filepath, const char *query_str, int sockfd)
+static void cgi_setup_env(const char *filepath, const struct http_request *req)
 {
-	FILE *fp;
+	if (req->method == HTTP_METHOD_GET) {
+		setenv("REQUEST_METHOD", "GET", 1);
+	} else if (req->method == HTTP_METHOD_POST) {
+		setenv("REQUEST_METHOD", "POST", 1);
+	}
+
+	setenv("SCRIPT_FILENAME", filepath, 1);
+	if (req->query_str)
+		setenv("QUERY_STRING", req->query_str, 1);
+
+	if (req->body) {
+		static char intbuf[20];
+		static char *content_type = "application/x-www-form-urlencoded";
+		sprintf(intbuf, "%ld", strlen(req->body));
+		setenv("CONTENT_LENGTH", intbuf, 1);
+		setenv("CONTENT_TYPE", content_type, strlen(content_type));
+	}
+}
+
+int file_read_php(const char *filepath, const struct http_request *req, int sockfd)
+{
+	int readfds[2];
+	int writefds[2];
+	pid_t pid;
+
 	char buffer[FILE_READBUF_SIZE];
 	size_t bytes_read;
 
-	setenv("REQUEST_METHOD", "GET", 1);
-	setenv("SCRIPT_FILENAME", filepath, 1);
-	if (query_str)
-		setenv("QUERY_STRING", query_str, 1);
+	cgi_setup_env(filepath, req);
 
-	fp = popen("php-cgi", "r");
-	if (fp == NULL) {
-		perror("Failed to read command");
+	/* Create pipes for reading from and writing to the child process. */
+	if (pipe(readfds) == -1) {
+		perror("read pipe");
 		return 1;
 	}
 
-	while ((bytes_read = fread(buffer, 1, FILE_READBUF_SIZE, fp)) > 0)
+	if (req->body && pipe(writefds) == -1) {
+		perror("write pipe");
+		return 1;
+	}
+
+	pid = fork();
+	if (pid == -1) {
+		perror("fork");
+		return 1;
+	}
+
+	if (pid == 0) {
+		close(readfds[0]);
+		if (readfds[1] != STDOUT_FILENO) {
+			dup2(readfds[1], STDOUT_FILENO);
+			close(readfds[1]);
+		}
+
+		if (req->body != NULL) {
+			close(writefds[1]);
+			if (writefds[0] != STDIN_FILENO) {
+				dup2(writefds[0], STDIN_FILENO);
+				close(writefds[0]);
+			}
+		}
+
+		execl("/usr/bin/php-cgi", "php-cgi", NULL);
+		/* We should only end up here if there's an error. */
+		perror("exec");
+		exit(1);
+	}
+
+	close(readfds[1]);
+	if (req->body != NULL) {
+		/* Write to stdin of child process. */
+		close(writefds[0]);
+		write(writefds[1], req->body, strlen(req->body) + 1);
+	}
+
+	/* Read its output from stdout. */
+	while ((bytes_read = read(readfds[0], buffer, FILE_READBUF_SIZE)) > 0)
 		write(sockfd, buffer, bytes_read);
 
 	unsetenv("QUERY_STRING");
+	unsetenv("CONTENT");
+	unsetenv("CONTENT_LENGTH");
 
-	pclose(fp);
+	close(readfds[0]);
+	close(writefds[1]);
+
 	return 0;
 }
