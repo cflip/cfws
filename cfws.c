@@ -11,13 +11,23 @@
 
 #define CFWS_DEFAULT_PORT 8080
 
+static int serverfd;
+
 static void handle_request(const struct http_request *, int);
+
+static void handle_sigint(int signum)
+{
+	(void)signum;
+	shutdown(serverfd, SHUT_RDWR);
+}
 
 int main(int argc, char *argv[])
 {
 	int port = CFWS_DEFAULT_PORT;
-	int serverfd, clientfd;
+	int clientfd;
 	struct http_request request;
+
+	signal(SIGINT, handle_sigint);
 
 	/* Prevent the program from quitting if it attempts to write to a closed
 	 * socket. */
@@ -30,7 +40,9 @@ int main(int argc, char *argv[])
 	printf("Serving a directory at localhost:%d\n", port);
 
 	while (1) {
-		request = net_next_request(serverfd, &clientfd);
+		int rc = net_next_request(serverfd, &clientfd, &request);
+		if (rc != 0)
+			break;
 
 		handle_request(&request, clientfd);
 

@@ -7,6 +7,6 @@
 #include "http.h"
 
 int net_init_server(int);
-struct http_request net_next_request(int serverfd, int *clientfd);
+int net_next_request(int serverfd, int *clientfd, struct http_request *);
 
 #endif

@@ -1,6 +1,7 @@
 #include "net.h"
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,19 +51,26 @@ int net_init_server(int port)
 	return sockfd;
 }
 
-struct http_request net_next_request(int serverfd, int *clientfd)
+int net_next_request(int serverfd, int *clientfd, struct http_request *req)
 {
 	int connfd;
 	char readbuf[CFWS_NET_MAXREAD];
-	struct http_request req;
 
 	connfd = accept(serverfd, NULL, NULL);
+	if (connfd == -1) {
+		/* EINVAL most likely indicates that the server socket was
+		 * closed due to the user pressing Ctrl+C. */
+		if (errno == EINVAL)
+			return 1;
+		perror("cfws: accept");
+		return -1;
+	}
 
 	/* Read and parse the HTTP request */
 	memset(readbuf, 0, CFWS_NET_MAXREAD);
 	read(connfd, readbuf, CFWS_NET_MAXREAD - 1);
-	req = http_parse_request(readbuf);
+	*req = http_parse_request(readbuf);
 
 	*clientfd = connfd;
-	return req;
+	return 0;
 }
