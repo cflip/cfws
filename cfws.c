@@ -13,6 +13,8 @@
 
 static int serverfd;
 
+int flag_verbose = 0;
+
 static void handle_request(const struct http_request *, int);
 
 static void handle_sigint(int signum)
@@ -21,11 +23,32 @@ static void handle_sigint(int signum)
 	shutdown(serverfd, SHUT_RDWR);
 }
 
+static void print_usage(const char *program_name)
+{
+	printf("USAGE: %s [OPTION]\n", program_name);
+	printf("\t-h\tPrint this help and exit\n\t-v\tPrint detailed information for each request and response\n");
+}
+
 int main(int argc, char *argv[])
 {
 	int port = CFWS_DEFAULT_PORT;
 	int clientfd;
 	struct http_request request;
+
+	int optchar;
+	while ((optchar = getopt(argc, argv, "hv")) != -1) {
+		switch (optchar) {
+		case 'h':
+			print_usage(argv[0]);
+			exit(EXIT_SUCCESS);
+		case 'v':
+			flag_verbose = 1;
+			break;
+		default:
+			print_usage(argv[0]);
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	signal(SIGINT, handle_sigint);
 
@@ -37,7 +60,8 @@ int main(int argc, char *argv[])
 	if (serverfd == -1)
 		return 1;
 
-	printf("Serving a directory at localhost:%d\n", port);
+	if (flag_verbose)
+		printf("Serving a directory at localhost:%d\n", port);
 
 	while (1) {
 		int rc = net_next_request(serverfd, &clientfd, &request);
@@ -50,6 +74,9 @@ int main(int argc, char *argv[])
 		close(clientfd);
 	}
 
+	if (flag_verbose)
+		printf("Shutting down server...\n");
+
 	close(serverfd);
 	return 0;
 }
@@ -59,6 +86,20 @@ static void handle_request(const struct http_request *req, int sockfd)
 	char *filepath = NULL;
 	enum http_res_code res_code;
 	enum serve_method method;
+
+	if (flag_verbose) {
+		switch (req->method) {
+		case HTTP_METHOD_GET:
+			printf("GET  :: %s\n", req->uri);
+			break;
+		case HTTP_METHOD_POST:
+			printf("POST :: %s\n", req->uri);
+			break;
+		default:
+			printf("???  :: %s\n", req->uri);
+			break;
+		}
+	}
 
 	if (req->method == HTTP_METHOD_UNKNOWN) {
 		method = SERVE_METHOD_ERROR;
@@ -78,12 +119,18 @@ static void handle_request(const struct http_request *req, int sockfd)
 	/* Use the chosen method to fill in the rest of the response */
 	switch (method) {
 	case SERVE_METHOD_FILE:
+		if (flag_verbose)
+			printf(" -> FILE %s\n", filepath);
 		file_read(filepath, sockfd);
 		break;
 	case SERVE_METHOD_PHP:
+		if (flag_verbose)
+			printf(" -> PHP  %s\n", filepath);
 		file_read_php(filepath, req, sockfd);
 		break;
 	case SERVE_METHOD_ERROR: {
+		if (flag_verbose)
+			printf(" -> ERROR %d\n", res_code);
 		const char *errmsg = "Content-Type: text/plain\r\n\r\nEpic fail";
 		write(sockfd, errmsg, strlen(errmsg));
 		break;
