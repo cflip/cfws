@@ -48,6 +48,8 @@ const char *file_path_for_uri(const char *uri)
 
 enum serve_method file_method_for_path(const char *filepath, enum http_res_code *code)
 {
+	struct stat statbuf;
+
 	if (access(filepath, F_OK) != 0) {
 		*code = HTTP_RESPONSE_NOTFOUND;
 		return SERVE_METHOD_ERROR;
@@ -56,6 +58,11 @@ enum serve_method file_method_for_path(const char *filepath, enum http_res_code 
 	*code = HTTP_RESPONSE_OK;
 	if (strstr(filepath, ".php") != 0)
 		return SERVE_METHOD_PHP;
+
+	stat(filepath, &statbuf);
+	if (statbuf.st_mode & S_IXUSR) {
+		return SERVE_METHOD_CGI;
+	}
 
 	return SERVE_METHOD_FILE;
 }
@@ -128,7 +135,7 @@ static void cgi_setup_env(const char *filepath, const struct http_request *req)
 	}
 }
 
-int file_read_php(const char *filepath, const struct http_request *req, int sockfd)
+int file_read_cgi(const char *filepath, const char *program, const struct http_request *req, int sockfd)
 {
 	int readfds[2];
 	int writefds[2];
@@ -171,7 +178,7 @@ int file_read_php(const char *filepath, const struct http_request *req, int sock
 			}
 		}
 
-		execl("/usr/bin/php-cgi", "php-cgi", NULL);
+		execl(program, program, NULL);
 		/* We should only end up here if there's an error. */
 		perror("exec");
 		exit(1);

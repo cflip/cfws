@@ -126,7 +126,12 @@ static void handle_request(const struct http_request *req, int sockfd)
 	case SERVE_METHOD_PHP:
 		if (flag_verbose)
 			printf(" -> PHP  %s\n", filepath);
-		file_read_php(filepath, req, sockfd);
+		file_read_cgi(filepath, "/usr/bin/php-cgi", req, sockfd);
+		break;
+	case SERVE_METHOD_CGI:
+		if (flag_verbose)
+			printf(" -> CGI  %s\n", filepath);
+		file_read_cgi(filepath, filepath, req, sockfd);
 		break;
 	case SERVE_METHOD_ERROR: {
 		if (flag_verbose)
