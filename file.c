@@ -126,6 +126,9 @@ static void cgi_setup_env(const char *filepath, const struct http_request *req)
 	if (req->query_str)
 		setenv("QUERY_STRING", req->query_str, 1);
 
+	if (req->cookie)
+		setenv("HTTP_COOKIE", req->cookie, 1);
+
 	if (req->body) {
 		static char intbuf[20];
 		static char *content_type = "application/x-www-form-urlencoded";
@@ -196,6 +199,7 @@ int file_read_cgi(const char *filepath, const char *program, const struct http_r
 		write(sockfd, buffer, bytes_read);
 
 	unsetenv("QUERY_STRING");
+	unsetenv("HTTP_COOKIE");
 	unsetenv("CONTENT");
 	unsetenv("CONTENT_LENGTH");
 

@@ -23,6 +23,7 @@ struct http_request {
 	int method;
 	char *uri;
 	char *query_str;
+	char *cookie;
 	char *body;
 };
 
